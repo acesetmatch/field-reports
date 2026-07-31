@@ -1,15 +1,18 @@
 {
   "expo": {
-    "name": "field-reports",
+    "name": "Field Reports",
     "slug": "field-reports",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shawnhong.fieldreports"
     },
     "android": {
+      "package": "com.shawnhong.fieldreports",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
