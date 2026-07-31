@@ -8,6 +8,7 @@ import {
   LoadingState,
 } from '../../../shared/components/StateViews';
 import { colors, radius, spacing, typography } from '../../../shared/theme';
+import { DeviceInfoCard } from '../../device/components/DeviceInfoCard';
 import { ReportsError } from '../api/fetchReports';
 import { useReport } from '../hooks/useReportList';
 
@@ -57,6 +58,15 @@ export function ReportDetailScreen({
           <Text style={styles.title}>{report.title}</Text>
           <Text style={styles.body}>{report.body}</Text>
         </View>
+
+        {/*
+          Only reports created on this device carry a snapshot. The union's
+          `origin` discriminant means TypeScript narrows `device` into scope
+          here rather than requiring an optional-chain on every report.
+        */}
+        {report.origin === 'local' && report.device ? (
+          <DeviceInfoCard snapshot={report.device} />
+        ) : null}
       </ScrollView>
     </Screen>
   );

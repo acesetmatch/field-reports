@@ -13,6 +13,8 @@ import { Button } from '../../../shared/components/Button';
 import { Screen } from '../../../shared/components/Screen';
 import { TextField } from '../../../shared/components/TextField';
 import { spacing } from '../../../shared/theme';
+import { DeviceInfoCard } from '../../device/components/DeviceInfoCard';
+import { useDeviceSnapshot } from '../../device/hooks/useDeviceSnapshot';
 import { useLocalReports } from '../store/localReportsStore';
 import {
   BODY_MAX_LENGTH,
@@ -31,6 +33,7 @@ export function CreateReportScreen({
   navigation,
 }: RootStackScreenProps<'CreateReport'>) {
   const { addReport } = useLocalReports();
+  const { snapshot, isCapturing, capture } = useDeviceSnapshot();
 
   const [values, setValues] = useState<ReportFormValues>(EMPTY_FORM);
   const [touched, setTouched] = useState<TouchedFields>(UNTOUCHED);
@@ -58,6 +61,10 @@ export function CreateReportScreen({
     const report = addReport({
       title: values.title.trim(),
       body: values.description.trim(),
+      // Undefined when the user never tapped attach, which is what keeps
+      // `device` genuinely optional on the report rather than always present
+      // and sometimes empty.
+      device: snapshot ?? undefined,
     });
 
     Alert.alert('Report filed', `Saved as report #${report.id}.`, [
@@ -111,6 +118,23 @@ export function CreateReportScreen({
             style={styles.multiline}
             textAlignVertical="top"
           />
+
+          <Button
+            label={
+              isCapturing
+                ? 'Reading device…'
+                : snapshot
+                  ? 'Refresh Device Information'
+                  : 'Attach Device Information'
+            }
+            variant="secondary"
+            onPress={capture}
+            disabled={isCapturing}
+          />
+
+          {snapshot ? (
+            <DeviceInfoCard snapshot={snapshot} title="Attached to this report" />
+          ) : null}
 
           <Button
             label="Submit report"
