@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { LocalReportsProvider } from './src/features/reports/store/localReportsStore';
 import { createQueryClient } from './src/shared/queryClient';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
@@ -15,8 +16,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style="dark" />
-        <RootNavigator />
+        <LocalReportsProvider>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </LocalReportsProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );
