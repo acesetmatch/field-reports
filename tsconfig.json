@@ -1,6 +1,9 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // Jest globals are ambient in test files; without this `tsc --noEmit`
+    // fails on `describe`/`it`/`expect` even though the tests run fine.
+    "types": ["jest"]
   }
 }
