@@ -37,7 +37,7 @@ export function ReportListScreen({
   // so the list never blanks out under the user.
   if (isPending && reports.length === 0) {
     return (
-      <Screen padded={false}>
+      <Screen>
         <LoadingState />
       </Screen>
     );
@@ -47,14 +47,14 @@ export function ReportListScreen({
   // is already reading — only show the error screen when there is nothing else.
   if (isError && reports.length === 0) {
     return (
-      <Screen padded={false}>
+      <Screen>
         <ErrorState message={toUserMessage(error)} onRetry={() => refetch()} />
       </Screen>
     );
   }
 
   return (
-    <Screen padded={false}>
+    <Screen>
       <FlatList
         data={reports}
         keyExtractor={keyExtractor}

@@ -10,9 +10,9 @@ import UIKit
 
  On physical hardware this returns a real percentage. The exercise required only
  one platform, and Android was chosen as the one that can actually be
- demonstrated here (see DECISIONS.md), so this exists for interface parity: the
- JavaScript contract is identical on both platforms and callers never branch on
- `Platform.OS`.
+ demonstrated (see README's "Native module" section), so this exists for
+ interface parity: the JavaScript contract is identical on both platforms and
+ callers never branch on `Platform.OS`.
  */
 public class BatteryLevelModule: Module {
   public func definition() -> ModuleDefinition {

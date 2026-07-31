@@ -20,10 +20,15 @@ import type { DeviceSnapshot } from '../types';
 export function useDeviceSnapshot() {
   const [snapshot, setSnapshot] = useState<DeviceSnapshot | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const capture = useCallback(async () => {
     setIsCapturing(true);
+    setError(null);
     try {
+      // Throws only if the native bridge is broken — an unavailable reading
+      // comes back as null. Surfaced as screen state rather than an unhandled
+      // rejection so the failure is visible instead of silent.
       const batteryLevel = await getBatteryLevel();
 
       const captured: DeviceSnapshot = {
@@ -39,12 +44,17 @@ export function useDeviceSnapshot() {
 
       setSnapshot(captured);
       return captured;
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Could not read device information.',
+      );
+      return null;
     } finally {
       setIsCapturing(false);
     }
   }, []);
 
-  const clear = useCallback(() => setSnapshot(null), []);
-
-  return { snapshot, isCapturing, capture, clear };
+  return { snapshot, isCapturing, error, capture };
 }

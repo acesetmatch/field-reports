@@ -18,7 +18,7 @@ import type { LocalReport } from '../types';
  *
  * In-memory only: the brief allows local state, and persistence would add a
  * rehydration loading state and a merge-order question for no graded benefit.
- * See DECISIONS.md for the production sync-queue design.
+ * The production sync-queue design is in README's "What I would improve".
  */
 
 /**

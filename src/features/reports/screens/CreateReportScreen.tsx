@@ -5,6 +5,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Text,
   type TextInput,
 } from 'react-native';
 
@@ -12,7 +13,7 @@ import type { RootStackScreenProps } from '../../../navigation/types';
 import { Button } from '../../../shared/components/Button';
 import { Screen } from '../../../shared/components/Screen';
 import { TextField } from '../../../shared/components/TextField';
-import { spacing } from '../../../shared/theme';
+import { colors, spacing, typography } from '../../../shared/theme';
 import { DeviceInfoCard } from '../../device/components/DeviceInfoCard';
 import { useDeviceSnapshot } from '../../device/hooks/useDeviceSnapshot';
 import { useLocalReports } from '../store/localReportsStore';
@@ -33,12 +34,21 @@ export function CreateReportScreen({
   navigation,
 }: RootStackScreenProps<'CreateReport'>) {
   const { addReport } = useLocalReports();
-  const { snapshot, isCapturing, capture } = useDeviceSnapshot();
+  const {
+    snapshot,
+    isCapturing,
+    error: deviceError,
+    capture,
+  } = useDeviceSnapshot();
 
   const [values, setValues] = useState<ReportFormValues>(EMPTY_FORM);
   const [touched, setTouched] = useState<TouchedFields>(UNTOUCHED);
 
   const descriptionRef = useRef<TextInput>(null);
+  // A second tap can land before the confirmation alert renders; without this
+  // ref, a fast double-tap would file the same report twice. Never reset —
+  // both alert actions leave the screen.
+  const submittedRef = useRef(false);
 
   // Validation runs on every keystroke so the submit button reflects the
   // current state, but errors are only *shown* for fields the user has left.
@@ -56,7 +66,8 @@ export function CreateReportScreen({
     setTouched((current) => ({ ...current, [field]: true }));
 
   const handleSubmit = () => {
-    if (!isValid) return;
+    if (submittedRef.current || !isValid) return;
+    submittedRef.current = true;
 
     const report = addReport({
       title: values.title.trim(),
@@ -78,7 +89,7 @@ export function CreateReportScreen({
   };
 
   return (
-    <Screen padded={false}>
+    <Screen>
       <KeyboardAvoidingView
         style={styles.flex}
         // iOS pushes content above the keyboard; Android's windowSoftInputMode
@@ -132,6 +143,10 @@ export function CreateReportScreen({
             disabled={isCapturing}
           />
 
+          {deviceError ? (
+            <Text style={styles.deviceError}>{deviceError}</Text>
+          ) : null}
+
           {snapshot ? (
             <DeviceInfoCard snapshot={snapshot} title="Attached to this report" />
           ) : null}
@@ -157,5 +172,9 @@ const styles = StyleSheet.create({
   },
   multiline: {
     minHeight: 160,
+  },
+  deviceError: {
+    ...typography.caption,
+    color: colors.danger,
   },
 });

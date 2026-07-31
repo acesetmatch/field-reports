@@ -24,20 +24,20 @@ export function ReportDetailScreen({
     // there (e.g. restored navigation state pointing at a stale local report).
     if (isPending) {
       return (
-        <Screen padded={false}>
+        <Screen>
           <LoadingState label="Loading report…" />
         </Screen>
       );
     }
     if (isError) {
       return (
-        <Screen padded={false}>
+        <Screen>
           <ErrorState message={toUserMessage(error)} />
         </Screen>
       );
     }
     return (
-      <Screen padded={false}>
+      <Screen>
         <EmptyState
           title="Report not found"
           description={`No report with ID ${reportId} is available.`}
@@ -47,7 +47,7 @@ export function ReportDetailScreen({
   }
 
   return (
-    <Screen padded={false}>
+    <Screen>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
           <View style={styles.metaRow}>
