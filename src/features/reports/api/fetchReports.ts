@@ -48,7 +48,28 @@ export async function fetchReports(signal?: AbortSignal): Promise<RemoteReport[]
     );
   }
 
-  const payload: unknown = await response.json();
+  // Two distinct ways a 200 response can still be unusable, both 'malformed':
+  //
+  //   1. Unparseable — the body is not JSON at all. An empty or truncated
+  //      body, or an HTML page substituted by a proxy. `Content-Type` is only
+  //      a claim; nothing guarantees the bytes match it.
+  //   2. Parseable but wrong shape — valid JSON whose contents are not what
+  //      this client requires, e.g. ids arriving as strings.
+  //
+  // The first is the common case and the second is the rare one, so both must
+  // be handled or the error taxonomy has a hole in it.
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    throw new ReportsError(
+      'malformed',
+      error instanceof Error
+        ? `Response body was not JSON: ${error.message}`
+        : 'Response body was not JSON',
+    );
+  }
+
   const parsed = remoteReportListSchema.safeParse(payload);
 
   if (!parsed.success) {
