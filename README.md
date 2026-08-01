@@ -132,13 +132,25 @@ This is encoded in the type system: `device` is optional and exists only on the 
 npm test
 ```
 
-16 unit tests across three pure functions, chosen for the highest ratio of confidence to setup cost: they need no renderer, no provider wrapper, and no network mocking.
+31 tests, chosen for the highest ratio of confidence to setup cost — no renderer, no provider wrapper, no network mocking.
+
+**Pure functions at module boundaries**
 
 - **API schema** — accepts valid payloads; rejects missing fields, wrong-typed fields, and non-list responses
 - **Form validation** — required, whitespace-only, minimum and maximum length, trimming before measuring, per-field independence
 - **Body preview** — passthrough, newline collapsing, word-boundary truncation, mid-word fallback, exact-limit boundary
 
-These are the three seams where logic crosses a module boundary. Everything else is composition, which component tests would cover better than unit tests.
+**Native module contract** (`modules/battery-level/contract.test.ts`)
+
+The module name and function names are plain strings duplicated across TypeScript, Kotlin, and Swift, with no compiler checking that they agree. A mismatch is a runtime failure on one platform only — the kind that ships because the other platform still works.
+
+Jest cannot exercise the real bridge, since `requireNativeModule` needs a native runtime. So this test reads the Kotlin and Swift sources off disk and asserts every implementation declares the same contract as the TypeScript side, plus that the autolinking config still points at the right classes. It runs in CI with no device attached.
+
+Verified to fail, not just to pass: renaming the function in Kotlin, renaming it in Swift, and changing the name passed to `requireNativeModule` each break a distinct assertion.
+
+**Native module behaviour** (`modules/battery-level/index.test.ts`)
+
+With the native module mocked, covers the distinction that matters: an *unavailable reading* is a normal outcome and returns `null`, while a *broken bridge* is a programming error and throws. Collapsing those two is what would let a renamed native function degrade silently to a permanent "Not available".
 
 ---
 

@@ -4,6 +4,12 @@
     "strict": true,
     // Jest globals are ambient in test files; without this `tsc --noEmit`
     // fails on `describe`/`it`/`expect` even though the tests run fine.
-    "types": ["jest"]
+    //
+    // `node` is here for the native-module contract test, which reads the
+    // Kotlin and Swift sources off disk. The tradeoff is that Node globals
+    // become visible to app code too, where they do not exist at runtime — a
+    // separate tsconfig for tests would scope it properly, which is the right
+    // move once there is more than one test needing them.
+    "types": ["jest", "node"]
   }
 }

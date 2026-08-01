@@ -66,13 +66,9 @@ const LocalReportsContext = createContext<LocalReportsContextValue | null>(null)
 export function LocalReportsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Ids come from a ref, not from reducer state, because the caller needs the
-  // created report back synchronously in order to navigate to it. Reading the
-  // next id from state would mean reading a value from a closure captured on
-  // the last render: two calls in the same render cycle would both be handed
-  // the same id while the reducer assigned two different ones, and the caller
-  // would navigate to the wrong report. A ref increments eagerly, so the id
-  // returned is always the id stored.
+  // The caller needs the new id synchronously to navigate. State only updates
+  // on the next render, so two calls in one cycle would read the same nextId.
+  // A ref increments immediately — the id returned is always the id stored.
   const nextIdRef = useRef(LOCAL_ID_START);
 
   const addReport = useCallback((input: NewReportInput): LocalReport => {
