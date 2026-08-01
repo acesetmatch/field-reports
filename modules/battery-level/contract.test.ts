@@ -32,7 +32,6 @@ const sources = {
   ),
   swift: read('ios/BatteryLevelModule.swift'),
   typescript: read('src/BatteryLevelModule.ts'),
-  web: read('src/BatteryLevelModule.web.ts'),
   types: read('src/BatteryLevel.types.ts'),
 };
 
@@ -94,15 +93,6 @@ describe('BatteryLevel native module contract', () => {
       },
     );
 
-    it.each(FUNCTION_NAMES)(
-      'the web implementation implements %s',
-      (functionName) => {
-        // Web is a real implementation, not a stub interface: if it stops
-        // implementing a contracted function, web callers get `undefined is
-        // not a function` rather than a type error.
-        expect(sources.web).toContain(`${functionName}(`);
-      },
-    );
   });
 
   it('every implementation is reachable from the module config', () => {

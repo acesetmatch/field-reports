@@ -44,3 +44,9 @@ yarn-error.*
 .claude/
 AGENTS.md
 CLAUDE.md
+
+# Local Expo module build output. The /android and /ios rules above are
+# anchored to the repo root, so they do not match modules/*/android/build.
+modules/*/android/build/
+modules/*/android/.gradle/
+modules/*/android/.cxx/

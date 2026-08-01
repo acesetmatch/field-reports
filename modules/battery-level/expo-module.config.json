@@ -1,9 +1,16 @@
 {
-  "platforms": ["apple", "android", "web"],
+  "platforms": [
+    "apple",
+    "android"
+  ],
   "apple": {
-    "modules": ["BatteryLevelModule"]
+    "modules": [
+      "BatteryLevelModule"
+    ]
   },
   "android": {
-    "modules": ["expo.modules.batterylevel.BatteryLevelModule"]
+    "modules": [
+      "expo.modules.batterylevel.BatteryLevelModule"
+    ]
   }
 }
