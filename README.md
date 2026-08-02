@@ -27,6 +27,20 @@ Built for the Senior Mobile Developer take-home exercise.
 - Android SDK **36** with build-tools 36, and `ANDROID_HOME` set
 - An Android emulator or a device with USB debugging enabled
 
+Toolchain setup is OS-specific and better covered upstream than restated here —
+Expo's [Set up your environment](https://docs.expo.dev/get-started/set-up-your-environment/)
+guide is the canonical version.
+
+Worth confirming before the first build, since every failure below is a slow one:
+
+```bash
+node -v            # 20+
+java -version      # 17 — the Gradle 9.3.1 wrapper requires 17 or newer
+echo $ANDROID_HOME # must be set, and the SDK must have platform 36 installed
+```
+
+Then install dependencies:
+
 ```bash
 npm install
 ```
