@@ -2,6 +2,8 @@
 
 A React Native application for viewing and filing field reports, with a custom native Android module for reading battery level.
 
+Built for the Senior Mobile Developer take-home exercise, against a four-hour budget. That budget is the context for the tradeoffs below: what is missing is missing on purpose, and each cut is named.
+
 ---
 
 ## What it does
@@ -126,7 +128,7 @@ Deliberately *not* a formal container/presentational split. Screens still hold t
 
 **Fetch errors are typed by kind** — `network`, `http`, `malformed` — each with its own user-facing copy. Telling someone to check their connection when the server returned bad JSON is actively misleading.
 
-**Errors and spinners only when there is nothing to show.** A failed background refetch leaves the existing list on screen rather than replacing it with an error; the refresh control communicates the failure instead.
+**Errors and spinners only when there is nothing to show.** A failed background refetch leaves the existing list on screen rather than replacing it with an error, so a refresh that fails offline never costs the user the reports they were reading. The missing half is a non-blocking surface for that failure — a banner or toast — without which a failed refresh is currently indistinguishable from a successful one. That is the next thing I would add here.
 
 **Validation is a pure function.** Two fields, no async rules, no cross-field dependencies — a form library would be weight without benefit. Validation runs on every keystroke so the submit button is always accurate, but errors only *display* for fields the user has left, so the form does not scold someone mid-typing.
 
