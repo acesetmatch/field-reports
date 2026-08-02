@@ -79,7 +79,7 @@ src/
   shared/             theme, query client, Screen, TextField, Button, state views
   navigation/         typed root stack
 modules/
-  battery-level/      local Expo module — Kotlin, Swift, web, TypeScript
+  battery-level/      local Expo module — Kotlin, Swift, TypeScript
 ```
 
 Feature-first rather than layer-first: the app has two domains, and the next ten screens would be new features, not new layers.
@@ -124,7 +124,7 @@ Deliberately *not* a formal container/presentational split. Screens still hold t
 
 `modules/battery-level` is a local Expo module — it lives outside the generated native folders, so regenerating them never touches it, and prebuild autolinks it.
 
-`getBatteryLevel()` resolves to a whole percentage or `null`. It never rejects: an unavailable reading is an expected outcome, not an error, and a nullable return beats forcing every caller into a `try`/`catch` for the normal case. Every platform-dependent field is nullable rather than optional, and the UI renders `null` as an explicit "Not available" — never as a zero or a dash that could be mistaken for a reading.
+`getBatteryLevel()` resolves to a whole percentage or `null`. An unavailable reading is an expected outcome, not an error, so it resolves to `null` rather than rejecting — a nullable return beats forcing every caller into a `try`/`catch` for the normal case. It rejects in exactly one case: the native module is missing the function entirely, which means the JavaScript and native definitions have drifted. That is a programming error, and failing loudly is what keeps it from degrading into a permanent, silent "Not available". Every platform-dependent field is nullable rather than optional, and the UI renders `null` as an explicit "Not available" — never as a zero or a dash that could be mistaken for a reading.
 
 **Android** reads the sticky `ACTION_BATTERY_CHANGED` broadcast, falling back to `BatteryManager.BATTERY_PROPERTY_CAPACITY`.
 
