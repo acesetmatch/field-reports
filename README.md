@@ -84,6 +84,22 @@ Feature-first rather than layer-first: the app has two domains, and the next ten
 
 ### Key decisions
 
+**Hooks are the seam between data and view.** No screen fetches, merges, or caches anything itself. Each feature keeps three separate layers:
+
+| Layer | Owns | Example |
+|---|---|---|
+| `api/`, `store/` | Talking to the network, holding client state | `fetchReports`, `localReportsStore` |
+| `hooks/` | Turning those sources into exactly what a screen needs | `useReportList`, `useReport`, `useDeviceSnapshot` |
+| `screens/`, `components/` | Layout, styling, and navigation only | `ReportListScreen`, `ReportCard` |
+
+`ReportListScreen` calls `useReportList()` and gets back `{ reports, isPending, isError, refetch, isRefetching }`. It does not know that two stores exist, that one is a query cache and the other a reducer, or in what order they merge — that lives in the hook. When persistence lands, the merge gains a third source and the screen does not change.
+
+The same split makes the awkward cases cheap. `useReport(id)` reuses the merged list rather than re-deriving it, so the detail screen can take an id as its route param instead of a whole entity. `useDeviceSnapshot` hides two very different sources — `expo-device` and a Kotlin native module — behind one `capture()` call, and turns a native-bridge rejection into `error` state; the component renders three fields and a button.
+
+It also decides what is testable. Data logic that ends up in a hook can be pulled one step further into a plain function — schema parsing, form validation, body preview — and tested with no renderer, no providers, and no network mocks. That is why 30 tests cost almost no setup.
+
+Deliberately *not* a formal container/presentational split. Screens still hold their own navigation callbacks and their own loading and error branching, because that is presentation logic — which spinner to show is a view decision, not a data one.
+
 **Expo with CNG.** `android/` and `ios/` are gitignored build output. The alternative — committing native folders — turns every React Native upgrade into a manual three-way merge against `project.pbxproj` and `build.gradle`. With CNG the upgrade is a regeneration, and intentional native changes live in config plugins as reviewable JavaScript. The tradeoff is an integration tax: a third-party SDK without a published plugin means writing one. I would go bare for app extensions, brownfield integration, or a regulated build that must commit an auditable native project.
 
 **React Navigation directly, not expo-router.** An explicit typed navigator makes the navigation structure and its type safety visible in one file. A global type augmentation makes the root param list the default, so a wrong route name or wrong params is a compile error anywhere in the app.
@@ -132,7 +148,7 @@ This is encoded in the type system: `device` is optional and exists only on the 
 npm test
 ```
 
-31 tests, chosen for the highest ratio of confidence to setup cost — no renderer, no provider wrapper, no network mocking.
+30 tests across 4 suites, chosen for the highest ratio of confidence to setup cost — no renderer, no provider wrapper, no network mocking.
 
 **Pure functions at module boundaries**
 
@@ -173,8 +189,10 @@ Written against a four-hour budget. Each of these was a deliberate cut, not an o
 
 1. **Persistence with a sync queue.** MMKV rather than AsyncStorage, for synchronous rehydration — AsyncStorage's async read causes a visible flash of empty state on cold start. Created reports modelled as a queue with `pending | syncing | synced | failed` status so the UI can show sync state per report, with TanStack's `persistQueryClient` for the server cache and a mutation queue that replays on reconnect.
 2. **Component tests.** React Native Testing Library over the list's loading, error, and empty states with a mocked query client, plus a Maestro flow for create → confirm → appears in list.
-3. **Pagination.** `useInfiniteQuery` against `?_page&_limit`, with `getItemLayout` and memoised rows once the list is long enough to matter.
+3. **Pagination.** `useInfiniteQuery` against `?_page&_limit`, with `getItemLayout` and memoised rows once the list is long enough to matter — or FlashList, which recycles cells instead of virtualising them, if profiling shows `FlatList` dropping frames.
 4. **The iOS half of the native module, on hardware.** The implementation is written; it needs a physical device and a provisioning profile to verify.
 5. **Dark mode.** `useColorScheme` plus a second palette in the token module — the tokens are already centralised for it.
 6. **CI.** Typecheck, tests, and a debug build on every pull request.
 7. **Richer device metadata.** Charging state, low-power mode, available storage, and network type are all useful provenance for a field report and all sit behind the same capture action.
+8. **OTA updates with EAS Update.** JavaScript-only fixes ship over the air in minutes, skipping store review. Native changes — like the battery module — still require a full release, so the module's contract test suite is what makes OTA safe: it catches JS/native drift before an update pushes it to every device.
+9. **Accessibility audit.** Dynamic Type support (the fixed `fontSize` tokens currently ignore the user's text-size setting), a VoiceOver/TalkBack pass, and contrast checks.
