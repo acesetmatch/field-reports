@@ -6,6 +6,13 @@ import { getBatteryLevel } from '../../../../modules/battery-level';
 import type { DeviceSnapshot } from '../types';
 
 /**
+ * Attaching device information is optional, so a failure here is not fatal to
+ * the task — the copy says so rather than leaving the user to guess.
+ */
+const CAPTURE_FAILED_MESSAGE =
+  'Could not read device information. You can still file the report without it.';
+
+/**
  * Captures platform information on demand.
  *
  * Two sources behind one interface: OS, version, and model come from
@@ -45,11 +52,12 @@ export function useDeviceSnapshot() {
       setSnapshot(captured);
       return captured;
     } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : 'Could not read device information.',
-      );
+      // The thrown error is a native-bridge diagnostic — "Cannot read property
+      // 'getBatteryLevel' of undefined" is exactly what a crash report needs
+      // and exactly what a field worker should never be shown. Same split as
+      // `ReportsError`: detail to the logs, actionable copy to the screen.
+      console.warn('Device snapshot capture failed', caught);
+      setError(CAPTURE_FAILED_MESSAGE);
       return null;
     } finally {
       setIsCapturing(false);

@@ -77,8 +77,6 @@ export function ReportListScreen({
             description="Pull to refresh, or tap New to file the first one."
           />
         }
-        // Android-only: detaches offscreen rows from the native view hierarchy.
-        removeClippedSubviews
       />
     </Screen>
   );
