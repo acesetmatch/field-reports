@@ -21,7 +21,10 @@ jest.mock('./src/BatteryLevelModule', () => ({
   },
 }));
 
-// Imported after the mock is registered.
+// Imported after the mock is registered. A static `import` would be hoisted
+// above `jest.mock`, so `require` is load-order-significant here, not a style
+// slip.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { getBatteryLevel } = require('./index') as typeof import('./index');
 
 describe('getBatteryLevel', () => {

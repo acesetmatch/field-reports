@@ -24,8 +24,10 @@ export type RootStackScreenProps<TRoute extends keyof RootStackParamList> =
  * in the app.
  */
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace ReactNavigation {
+    // Declaration merging needs an `interface`, and the whole point here is to
+    // add no members of its own — so the empty body is the intended shape.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

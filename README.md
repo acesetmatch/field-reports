@@ -56,6 +56,8 @@ The app builds and runs on iOS, but battery level reports as unavailable there â
 ```bash
 npm test         # unit tests
 npm run typecheck
+npm run lint     # eslint-config-expo; warnings fail the run
+npm run lint:fix
 ```
 
 **If the Android build fails**
