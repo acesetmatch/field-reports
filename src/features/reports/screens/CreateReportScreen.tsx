@@ -1,13 +1,17 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
+  Dimensions,
+  Keyboard,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  View,
+  type KeyboardEvent,
   type TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackScreenProps } from '../../../navigation/types';
 import { Button } from '../../../shared/components/Button';
@@ -45,6 +49,50 @@ export function CreateReportScreen({
   const [touched, setTouched] = useState<TouchedFields>(UNTOUCHED);
 
   const descriptionRef = useRef<TextInput>(null);
+
+  // KeyboardAvoidingView compares its own layout frame — measured relative to
+  // its parent — against the keyboard's screen position, and this screen is
+  // presented modally under a header, so those two coordinate spaces disagree
+  // and the footer ends up under the keyboard. Reading the keyboard frame
+  // directly sidesteps the mismatch: the form's bottom edge is the window's
+  // bottom edge, so the overlap is simply the keyboard's height.
+  const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    // How far up the screen the keyboard reaches. Deriving this from `screenY`
+    // rather than the reported keyboard height matters on Android, where the
+    // height excludes the gesture-navigation strip the keyboard also covers.
+    const onKeyboardFrame = (event: KeyboardEvent) =>
+      setKeyboardHeight(
+        Math.max(
+          Dimensions.get('window').height - event.endCoordinates.screenY,
+          0,
+        ),
+      );
+
+    // Android is edge to edge from SDK 54 on, so its `adjustResize` no longer
+    // shrinks the window — both platforms need the padding, they just announce
+    // the keyboard through different events.
+    const subscriptions =
+      Platform.OS === 'ios'
+        ? [
+            // `WillChangeFrame` rather than `DidShow` so the lift animates
+            // alongside the keyboard instead of snapping into place after it.
+            Keyboard.addListener('keyboardWillChangeFrame', onKeyboardFrame),
+          ]
+        : [
+            Keyboard.addListener('keyboardDidShow', onKeyboardFrame),
+            Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0)),
+          ];
+
+    return () => subscriptions.forEach((subscription) => subscription.remove());
+  }, []);
+
+  // The screen already pads for the home indicator; without subtracting it the
+  // footer would float that far above the keyboard.
+  const keyboardPadding = Math.max(keyboardHeight - insets.bottom, 0);
+
   // A second tap can land before the confirmation alert renders; without this
   // ref, a fast double-tap would file the same report twice. Never reset —
   // both alert actions leave the screen.
@@ -90,15 +138,15 @@ export function CreateReportScreen({
 
   return (
     <Screen>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        // iOS pushes content above the keyboard; Android's windowSoftInputMode
-        // already resizes the window, so padding there would double-count.
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <View style={[styles.flex, { paddingBottom: keyboardPadding }]}>
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          // Dragging the form down dismisses the keyboard, so the description
+          // field is not a trap on small screens.
+          keyboardDismissMode={
+            Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+          }
         >
           <TextField
             label="Title"
@@ -148,16 +196,23 @@ export function CreateReportScreen({
           ) : null}
 
           {snapshot ? (
-            <DeviceInfoCard snapshot={snapshot} title="Attached to this report" />
+            <DeviceInfoCard
+              snapshot={snapshot}
+              title="Attached to this report"
+            />
           ) : null}
+        </ScrollView>
 
+        {/* Outside the ScrollView so the primary action stays reachable while
+            the keyboard is up, instead of being scrolled off behind it. */}
+        <View style={styles.footer}>
           <Button
             label="Submit report"
             onPress={handleSubmit}
             disabled={!isValid}
           />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </View>
     </Screen>
   );
 }
@@ -172,6 +227,13 @@ const styles = StyleSheet.create({
   },
   multiline: {
     minHeight: 160,
+  },
+  footer: {
+    padding: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   deviceError: {
     ...typography.caption,
