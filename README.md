@@ -192,10 +192,10 @@ Written against a four-hour budget. Each of these was a deliberate cut, not an o
 
 | Cut | Reasoning |
 |---|---|
-| **No persistence** | The brief permits local state. Persistence adds a rehydration loading state, serialisation, and merge-order questions — invisible to a reviewer, expensive in time. |
+| **No persistence** | The brief permits local state. Persistence adds a rehydration loading state, serialisation, and merge-order questions — real cost against a four-hour budget, for behaviour the exercise does not ask for. |
 | **No pagination** | 100 items; `FlatList` virtualises them without strain. |
 | **No component or E2E tests** | Highest setup cost, and testing is not in the brief. Pure-function coverage buys most of the confidence for a fraction of the time. |
-| **No dark mode, i18n, or CI** | Not requested, not graded. |
+| **No dark mode, i18n, or CI** | Not requested; cut for budget. |
 | **iOS battery is a stub on Simulator** | Cannot be demonstrated there at all; the brief requires one platform. |
 | **No editing or deleting reports** | Not requested. |
 
