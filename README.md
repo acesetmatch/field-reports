@@ -2,8 +2,6 @@
 
 A React Native application for viewing and filing field reports, with a custom native Android module for reading battery level.
 
-Built for the Senior Mobile Developer take-home exercise.
-
 ---
 
 ## What it does
