@@ -10,7 +10,7 @@ Built for the Senior Mobile Developer take-home exercise, against a four-hour bu
 
 | Screen | Behaviour |
 |---|---|
-| **Report list** | Fetches reports from `jsonplaceholder.typicode.com/posts`. Shows ID, title, and a body preview. Loading, error (with retry), and empty states. Pull to refresh, with an "Updated N ago" stamp and a dismissible banner when a refresh fails. Reports created on-device appear at the top, badged. |
+| **Report list** | Fetches reports from `jsonplaceholder.typicode.com/posts`. Shows ID, title, and a body preview. Loading, error (with retry), and empty states. Pull to refresh. Reports created on-device appear at the top, badged. |
 | **Report detail** | Full title, full body, report ID. Shows attached device information when the report has any. |
 | **Create report** | Title and description with live validation. Submit disabled until valid. Optional **Attach Device Information**. Confirmation on submit. |
 
@@ -90,8 +90,7 @@ src/
   features/
     reports/          api, hooks, components, screens, store, types, validation
     device/           hooks, components, types
-  shared/             theme, query client, Screen, TextField, Button, Banner,
-                      state views, relative-time formatting
+  shared/             theme, query client, Screen, TextField, Button, state views
   navigation/         typed root stack
 modules/
   battery-level/      local Expo module — Kotlin, Swift, TypeScript
@@ -109,11 +108,11 @@ Feature-first rather than layer-first: the app has two domains, and the next ten
 | `hooks/` | Turning those sources into exactly what a screen needs | `useReportList`, `useReport`, `useDeviceSnapshot` |
 | `screens/`, `components/` | Layout, styling, and navigation only | `ReportListScreen`, `ReportCard` |
 
-`ReportListScreen` calls `useReportList()` and gets back `{ reports, isPending, isError, refetch, isRefetching, dataUpdatedAt, ... }`. It does not know that two stores exist, that one is a query cache and the other a reducer, or in what order they merge — that lives in the hook. When persistence lands, the merge gains a third source and the screen does not change.
+`ReportListScreen` calls `useReportList()` and gets back `{ reports, isPending, isError, refetch, isRefetching }`. It does not know that two stores exist, that one is a query cache and the other a reducer, or in what order they merge — that lives in the hook. When persistence lands, the merge gains a third source and the screen does not change.
 
 The same split makes the awkward cases cheap. `useReport(id)` reuses the merged list rather than re-deriving it, so the detail screen can take an id as its route param instead of a whole entity. `useDeviceSnapshot` hides two very different sources — `expo-device` and a Kotlin native module — behind one `capture()` call, and turns a native-bridge rejection into `error` state; the component renders three fields and a button.
 
-It also decides what is testable. Data logic that ends up in a hook can be pulled one step further into a plain function — schema parsing, form validation, body preview — and tested with no renderer, no providers, and no network mocks. That is why 37 tests cost almost no setup.
+It also decides what is testable. Data logic that ends up in a hook can be pulled one step further into a plain function — schema parsing, form validation, body preview — and tested with no renderer, no providers, and no network mocks. That is why 30 tests cost almost no setup.
 
 Deliberately *not* a formal container/presentational split. Screens still hold their own navigation callbacks and their own loading and error branching, because that is presentation logic — which spinner to show is a view decision, not a data one.
 
@@ -131,9 +130,7 @@ Deliberately *not* a formal container/presentational split. Screens still hold t
 
 **Fetch errors are typed by kind** — `network`, `http`, `malformed` — each with its own user-facing copy. Telling someone to check their connection when the server returned bad JSON is actively misleading.
 
-**Errors and spinners only when there is nothing to show.** A failed background refetch leaves the existing list on screen rather than replacing it with an error, so a refresh that fails offline never costs the user the reports they were reading. That half is only correct if the failure is still reported, though — otherwise a refresh that failed looks exactly like one that succeeded, and the user trusts stale data. So the list carries two things instead: a dismissible banner naming *why* the refresh failed, and an "Updated N ago" stamp saying *how stale* the data is.
-
-The pair is deliberate. The banner uses `ReportsError.userMessage`, so a 503 says the server failed rather than telling someone to check a connection that is fine. The stamp is the one that keeps earning when nothing has failed — it answers the freshness question on the happy path too. Dismissal is keyed to `errorUpdatedAt` rather than a boolean, so acknowledging one failure does not silence the next; a plain `dismissed` flag would rebuild the same silent-refresh problem one layer up. A toast was the other option and was rejected: the condition it reports stays true long after the toast fades, so anyone who looked away is uninformed again.
+**Errors and spinners only when there is nothing to show.** A failed background refetch leaves the existing list on screen rather than replacing it with an error, so a refresh that fails offline never costs the user the reports they were reading. The missing half is a non-blocking surface for that failure — a banner or toast — without which a failed refresh is currently indistinguishable from a successful one. That is the next thing I would add here.
 
 **Validation is a pure function.** Two fields, no async rules, no cross-field dependencies — a form library would be weight without benefit. Validation runs on every keystroke so the submit button is always accurate, but errors only *display* for fields the user has left, so the form does not scold someone mid-typing.
 
@@ -169,14 +166,13 @@ This is encoded in the type system: `device` is optional and exists only on the 
 npm test
 ```
 
-37 tests across 5 suites, chosen for the highest ratio of confidence to setup cost — no renderer, no provider wrapper, no network mocking.
+30 tests across 4 suites, chosen for the highest ratio of confidence to setup cost — no renderer, no provider wrapper, no network mocking.
 
 **Pure functions at module boundaries**
 
 - **API schema** — accepts valid payloads; rejects missing fields, wrong-typed fields, and non-list responses
 - **Form validation** — required, whitespace-only, minimum and maximum length, trimming before measuring, per-field independence
 - **Body preview** — passthrough, newline collapsing, word-boundary truncation, mid-word fallback, exact-limit boundary
-- **Relative time** — bucket boundaries, singular/plural, and a timestamp ahead of `now` (clock skew) rendering as "just now" rather than a negative age
 
 **Native module contract** (`modules/battery-level/contract.test.ts`)
 
