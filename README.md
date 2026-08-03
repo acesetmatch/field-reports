@@ -53,7 +53,7 @@ This project uses Expo with **Continuous Native Generation** — `android/` and 
 npm run android      # expo run:android — prebuilds, compiles, installs, starts Metro
 ```
 
-The first build takes 5–10 minutes (Gradle downloads dependencies). Subsequent builds are seconds. After the first build, `npm start` alone is enough for JavaScript changes; only native changes require a rebuild.
+The first build takes 10–30 minutes on a machine with a cold Gradle cache — it downloads the Gradle distribution and every dependency, then compiles React Native's C++ layer from source. A clean-clone run on an M-series Mac took 27 minutes. It is not stuck; let it finish. Subsequent builds are seconds. After the first build, `npm start` alone is enough for JavaScript changes; only native changes require a rebuild.
 
 > **Expo Go will not work.** It cannot load a custom native module. `expo run:android` produces a development build that includes the Kotlin module while keeping Metro hot reload.
 
